@@ -1,0 +1,8 @@
+/target
+/.env
+/data
+/models
+*.log
+.cargo/
+.venv/
+target/
