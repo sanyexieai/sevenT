@@ -10,6 +10,22 @@ This repository contains a page translation stack for NAS, homelab, and local de
 - A `Rust + Axum + ct2rs + CTranslate2 + NLLB` HTTP translation service
 - A Chrome extension that extracts page text, translates it, and writes the translated content back into the DOM
 
+## Screenshots / 界面截图
+
+中文：
+下面两张截图展示了扩展在 Hugging Face 页面上的实际效果：
+- `compare` 模式：保留原页面结构，并在原文附近插入译文
+- `replace` 模式：直接把页面中的文本替换为译文
+
+English:
+The two screenshots below show the extension behavior on a Hugging Face page:
+- `compare` mode keeps the original structure and injects translated content nearby
+- `replace` mode directly replaces page text with translated output
+
+![Compare Mode Screenshot / 对比模式截图](<doc/截图 2026-04-12 00-01-47.png>)
+
+![Replace Mode Screenshot / 覆盖模式截图](<doc/截图 2026-04-12 00-05-28.png>)
+
 ## Overview / 项目概览
 
 中文：
@@ -29,7 +45,7 @@ The project is optimized for practical deployment rather than for being a full b
 ## Quick Start / 快速开始
 
 中文：
-如果你只是想尽快跑起来，建议按下面的顺序：
+标准启动流程如下：
 1. 准备好 `models/nllb-200-distilled-600M/`
 2. 启动本地服务：`cargo run`
 3. 打开 `chrome://extensions`
@@ -38,7 +54,7 @@ The project is optimized for practical deployment rather than for being a full b
 6. 打开任意网页，点击“翻译整页”
 
 English:
-If you want the fastest path to a working setup:
+Standard startup flow:
 1. Prepare `models/nllb-200-distilled-600M/`
 2. Start the service with `cargo run`
 3. Open `chrome://extensions`
@@ -108,7 +124,7 @@ English:
 中文：
 项目默认使用 `facebook/nllb-200-distilled-600M` 转换得到的 CTranslate2 模型。
 
-可参考以下转换命令：
+模型转换命令如下：
 
 ```bash
 pip install ctranslate2 huggingface_hub torch transformers
@@ -125,7 +141,7 @@ models/nllb-200-distilled-600M/
 └─ tokenizer.json
 ```
 
-如果你走 SentencePiece 路线，也可以使用：
+使用 SentencePiece 文件时，目录结构如下：
 
 ```text
 models/nllb-200-distilled-600M/
@@ -156,14 +172,14 @@ models/nllb-200-distilled-600M/
 
 SentencePiece-based setup is also supported if both `source.spm` and `target.spm` are present.
 
-补充 / Note:
+说明 / Notes:
 - Hugging Face upstream model license is `CC-BY-NC-4.0`
 - This service depends on the converted CTranslate2 model directory rather than the original Transformers checkpoint
 
 ## Local Development / 本地开发
 
 中文：
-`ct2rs` 会间接依赖 `sentencepiece-sys`，构建时通常需要 `cmake`：
+`ct2rs` 会间接依赖 `sentencepiece-sys`，本地构建需要 `cmake`：
 
 ```bash
 # Debian / Ubuntu
@@ -171,7 +187,7 @@ sudo apt-get update
 sudo apt-get install -y cmake pkg-config build-essential clang
 ```
 
-如果你计划使用 NVIDIA GPU，可以额外安装 CUDA Toolkit。
+NVIDIA GPU 部署需要额外安装 CUDA Toolkit。
 
 启动本地服务：
 
@@ -194,7 +210,7 @@ sudo apt-get update
 sudo apt-get install -y cmake pkg-config build-essential clang
 ```
 
-If you want GPU execution, install CUDA Toolkit separately.
+GPU deployment requires CUDA Toolkit to be installed separately.
 
 Start the local service:
 
@@ -211,7 +227,7 @@ Default bind address:
 ## Docker and NAS Deployment / Docker 与 NAS 部署
 
 中文：
-默认 `compose.yaml` 走 CPU 路径，更适合通用 NAS 环境。
+`compose.yaml` 提供 CPU 部署路径，适用于通用 NAS 环境。
 
 CPU 部署：
 
@@ -232,7 +248,7 @@ docker compose -f compose.yaml -f compose.gpu.yaml up -d --build
 ```
 
 English:
-`compose.yaml` is the safe CPU-first path for general NAS setups.
+`compose.yaml` provides the CPU deployment path for general NAS setups.
 
 CPU deployment:
 
@@ -252,7 +268,7 @@ cp /home/sanye/.cache/cargo-target/sevenT/release/nas-nllb-service .dist/nas-nll
 docker compose -f compose.yaml -f compose.gpu.yaml up -d --build
 ```
 
-部署前建议确认 / Before deployment, make sure:
+部署要求 / Deployment requirements:
 - `./models` contains the converted model
 - Port `8080` is free
 - The NAS has enough memory to load the model
@@ -329,52 +345,6 @@ Steps:
 - Load the `chrome-extension/` directory as an unpacked extension
 - Open any web page and use either the popup or the floating shortcut buttons
 
-### Screenshot Guide / 截图说明
-
-中文：
-如果你准备补项目截图，建议至少包含下面几张：
-- 扩展弹窗截图：展示 Provider、接口地址、模式切换、语言设置和自定义白名单输入框
-- 页面右侧快捷按钮截图：展示“翻译整页 / 显示原文”和“模式：对比 / 模式：覆盖”按钮
-- `compare` 模式截图：展示原文保留、译文紧随其后的效果
-- `replace` 模式截图：展示页面文本被直接替换后的效果
-- 动态页面截图：展示异步加载内容在页面更新后也被自动翻译
-- 请求日志截图：展示 `logs/requests.jsonl` 中的请求记录格式
-
-建议截图时注意：
-- 尽量选有标题、正文、按钮、链接混合内容的页面，方便体现分词和结构保留效果
-- 最好同时包含一两个带斜杠、横杠或 CamelCase 的词，便于展示特殊文本处理能力
-- 如果截图要放进 README，建议统一宽度和裁切风格
-
-English:
-If you plan to add screenshots to the repository, these are the most useful ones to include:
-- Extension popup: show provider selection, endpoint, render mode, language settings, and the custom skip whitelist input
-- Floating shortcut buttons: show the right-side "translate / restore" and mode toggle buttons
-- `compare` mode: show the original text preserved with translated content injected nearby
-- `replace` mode: show the page after the original text has been replaced
-- Dynamic page example: show async content being translated after page updates
-- Request log example: show the format of entries in `logs/requests.jsonl`
-
-Screenshot tips:
-- Pick a page with headings, paragraph text, buttons, and links so the structure-preserving behavior is easy to see
-- Include one or two slash-, hyphen-, or CamelCase-heavy terms to demonstrate special-text handling
-- If the images will live in the README, keep widths and crop style consistent
-
-#### Current Screenshots / 当前截图
-
-中文：
-下面两张截图展示了当前扩展在 Hugging Face 页面上的实际效果：
-- `compare` 模式：保留原页面结构，并在原文附近插入译文
-- `replace` 模式：直接把页面中的文本替换为译文
-
-English:
-The two screenshots below show the current extension behavior on a Hugging Face page:
-- `compare` mode keeps the original structure and injects translated content nearby
-- `replace` mode directly replaces page text with translated output
-
-![Compare Mode Screenshot / 对比模式截图](<doc/截图 2026-04-12 00-01-47.png>)
-
-![Replace Mode Screenshot / 覆盖模式截图](<doc/截图 2026-04-12 00-05-28.png>)
-
 ### Extension Capabilities / 扩展能力
 
 中文：
@@ -402,7 +372,7 @@ English:
 ### Translation Strategy / 翻译策略
 
 中文：
-当前扩展采用“白名单跳过，其余尽量翻译”的策略。
+扩展采用“白名单跳过，其余尽量翻译”的策略。
 
 内置白名单会明确跳过：
 - URL
@@ -443,7 +413,7 @@ Everything else that looks like visible page text is translated as aggressively 
 符号本身不会交给翻译服务，但会在最终回填时保持原位。
 
 English:
-Before sending text to the translation service, the extension tries to strip symbols from the text to be translated while preserving the original structural separators.
+Before sending text to the translation service, the extension strips symbols from the translatable text while preserving the original structural separators.
 
 Examples:
 - `internlm/WildClawBench` becomes `internlm` + `/` + `WildClawBench`
@@ -462,7 +432,7 @@ Symbols are not translated, but they are preserved in the final reconstructed ou
 如果模型把缩写词翻成纯特殊 token，例如 `UPD -> <unk>`，扩展会保留原缩写，避免出现 `MM-/MM-` 这类丢词结果。
 
 English:
-The extension tries to handle:
+The extension handles:
 - CamelCase tokens such as `WildClawBench`
 - mixed alpha-numeric tokens such as `Wild3lawBench`
 - hyphen/slash compounds such as `full-text-search`
@@ -518,12 +488,12 @@ After the first successful translation, the extension enables a `MutationObserve
 ### Navigation Persistence / 翻页状态保持
 
 中文：
-如果你已经开启整页翻译，页面导航后扩展会自动续翻。
-按钮状态和右键菜单状态也会尽量跟随这个“持续翻译”状态同步。
+整页翻译开启后，页面导航后扩展会自动续翻。
+按钮状态和右键菜单状态会与该持续翻译状态同步。
 
 English:
-If whole-page translation is enabled, the extension tries to automatically re-apply translation after navigation.
-The floating shortcut button state and context menu state are also kept in sync with this sticky translation intent.
+When whole-page translation is enabled, the extension automatically re-applies translation after navigation.
+The floating shortcut button state and context menu state stay in sync with that sticky translation state.
 
 ## Popup Settings / 弹窗设置说明
 
@@ -566,8 +536,8 @@ Custom whitelist syntax:
 - `http_nllb`: current local `nas-nllb-service` style HTTP API
 - `http_openai_chat`: OpenAI Chat Completions compatible endpoint
 - `http_openai_responses`: OpenAI Responses compatible endpoint
-- `mcp`: reserved for future MCP integration
-- `native_app`: reserved for future local app / bridge integration
+- `mcp`: placeholder for MCP integration
+- `native_app`: placeholder for local app / bridge integration
 
 ## Environment Variables / 环境变量
 
@@ -641,27 +611,27 @@ Recorded fields include:
 - 扩展点了没反应：先确认服务是否能正常访问 `http://127.0.0.1:8080/healthz`
 - 页面翻译后刷新丢失：确认扩展是否已重新加载到最新版本
 - 某些词没翻：先看 [logs/requests.jsonl](/media/sanye/代码/code/rust/sevenT/logs/requests.jsonl) 是否收到对应请求
-- 出现 `<unk>`、`<pad>` 等：前端会清洗这类 token，如果仍然可见，通常说明扩展没加载到最新脚本
-- 动态页面没自动补翻：确认当前处于翻译状态，并让页面完成一次初始翻译后再观察异步内容
+- 出现 `<unk>`、`<pad>` 等：前端会清洗这类 token；如果仍然可见，通常表示扩展仍在运行旧脚本
+- 动态页面没自动补翻：该能力在页面进入翻译状态后生效，异步内容会在首次整页翻译完成后继续处理
 
 English:
 - Nothing happens when the extension is clicked: verify `http://127.0.0.1:8080/healthz` is reachable
 - Translation state is lost after refresh: make sure the extension was reloaded after recent changes
 - A specific term is not translated: inspect [logs/requests.jsonl](/media/sanye/代码/code/rust/sevenT/logs/requests.jsonl) and verify the request actually reached the backend
 - You still see `<unk>` or `<pad>`: the frontend should strip these tokens, so this usually means an older extension build is still running
-- Dynamic content was not re-translated: make sure the page had already entered translated state before the async content appeared
+- Dynamic content was not re-translated: this capability becomes active after the page enters translated state, and async content continues to be processed after the initial full-page pass
 
 ## Development Notes / 开发说明
 
 中文：
-- 当前项目更强调“本地可部署、前后端都能调试”的实用性
+- 项目以“本地可部署、前后端可调试”为主要设计目标
 - 扩展侧逻辑较多，排查前端问题时优先看控制台和请求日志
-- 如果后续继续扩展 provider，建议先保持现有配置结构不变
+- Provider 扩展保持现有配置结构，有利于降低兼容性调整成本
 
 English:
-- The current repository is optimized for deployability and debuggability
+- The repository is designed primarily for deployability and debuggability
 - Most tricky issues happen on the extension side, so browser console output and request logs are usually the first places to inspect
-- If you add more providers later, keeping the current config shape stable will make the extension easier to maintain
+- Keeping the current config shape stable reduces maintenance cost when additional providers are introduced
 
 ## License Notes / 许可说明
 
@@ -676,16 +646,16 @@ Please also review the upstream Hugging Face / Meta NLLB model license terms bef
 ## Current Boundaries / 当前边界
 
 中文：
-这个项目目前更偏“可部署、可调试、可迭代”的基础骨架，而不是完整生产平台。
+该项目当前提供“可部署、可调试、可迭代”的基础能力，尚未覆盖完整生产平台能力。
 
-当前没有额外实现：
+当前未包含：
 - 鉴权
 - 限流
 - 后台管理
 - 任务队列
 - 批量翻译 API
 
-如果要继续往生产环境推进，建议补：
+生产化增强方向包括：
 - 多语言回归测试
 - 结果缓存
 - API Key 鉴权
@@ -694,16 +664,16 @@ Please also review the upstream Hugging Face / Meta NLLB model license terms bef
 - 更细致的前端页面分块策略
 
 English:
-This repository is currently closer to a deployable and debuggable foundation than to a full production translation platform.
+This repository currently provides a deployable, debuggable, and extensible foundation rather than a full production translation platform.
 
-Not yet implemented:
+Not included at this stage:
 - authentication
 - rate limiting
 - admin panel
 - task queue
 - batch translation API
 
-Recommended next steps for production-hardening:
+Production-hardening directions:
 - multilingual regression tests
 - translation result caching
 - API key based auth
