@@ -263,6 +263,8 @@
       }
     }
 
+    clearCompareArtifacts();
+
     const nodeBudget = Math.max(1, Math.floor(options.maxNodes * 0.75));
     const attrBudget = Math.max(20, options.maxNodes - nodeBudget);
     const nodes = collectTextNodes(document.body, nodeBudget, options.targetLang, {
@@ -379,6 +381,14 @@
       state.translatedNodes.delete(node);
     }
 
+    count += clearCompareArtifacts();
+
+    return count;
+  }
+
+  function clearCompareArtifacts() {
+    let count = 0;
+
     for (const target of state.translatedAttributes.splice(0)) {
       if (!target.element?.isConnected) {
         continue;
@@ -395,6 +405,15 @@
       }
     }
 
+    for (const block of document.querySelectorAll(".nas-translation-compare-block, .nas-translation-compare-inline")) {
+      if (!block.isConnected) {
+        continue;
+      }
+      block.remove();
+      count += 1;
+    }
+
+    state.compareBlockByRoot = new WeakMap();
     return count;
   }
 
@@ -428,6 +447,9 @@
           return NodeFilter.FILTER_REJECT;
         }
         if (parent.isContentEditable) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        if (parent.closest(".nas-translation-compare-block, .nas-translation-compare-inline")) {
           return NodeFilter.FILTER_REJECT;
         }
         if (visibleOnly && (!parent.checkVisibility || !parent.checkVisibility())) {
@@ -482,6 +504,9 @@
     for (const element of root.querySelectorAll(selector)) {
       if (targets.length >= maxTargets) {
         break;
+      }
+      if (element.closest(".nas-translation-compare-block, .nas-translation-compare-inline")) {
+        continue;
       }
       if (visibleOnly && element.checkVisibility && !element.checkVisibility()) {
         continue;

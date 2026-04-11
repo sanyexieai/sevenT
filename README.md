@@ -329,6 +329,52 @@ Steps:
 - Load the `chrome-extension/` directory as an unpacked extension
 - Open any web page and use either the popup or the floating shortcut buttons
 
+### Screenshot Guide / 截图说明
+
+中文：
+如果你准备补项目截图，建议至少包含下面几张：
+- 扩展弹窗截图：展示 Provider、接口地址、模式切换、语言设置和自定义白名单输入框
+- 页面右侧快捷按钮截图：展示“翻译整页 / 显示原文”和“模式：对比 / 模式：覆盖”按钮
+- `compare` 模式截图：展示原文保留、译文紧随其后的效果
+- `replace` 模式截图：展示页面文本被直接替换后的效果
+- 动态页面截图：展示异步加载内容在页面更新后也被自动翻译
+- 请求日志截图：展示 `logs/requests.jsonl` 中的请求记录格式
+
+建议截图时注意：
+- 尽量选有标题、正文、按钮、链接混合内容的页面，方便体现分词和结构保留效果
+- 最好同时包含一两个带斜杠、横杠或 CamelCase 的词，便于展示特殊文本处理能力
+- 如果截图要放进 README，建议统一宽度和裁切风格
+
+English:
+If you plan to add screenshots to the repository, these are the most useful ones to include:
+- Extension popup: show provider selection, endpoint, render mode, language settings, and the custom skip whitelist input
+- Floating shortcut buttons: show the right-side "translate / restore" and mode toggle buttons
+- `compare` mode: show the original text preserved with translated content injected nearby
+- `replace` mode: show the page after the original text has been replaced
+- Dynamic page example: show async content being translated after page updates
+- Request log example: show the format of entries in `logs/requests.jsonl`
+
+Screenshot tips:
+- Pick a page with headings, paragraph text, buttons, and links so the structure-preserving behavior is easy to see
+- Include one or two slash-, hyphen-, or CamelCase-heavy terms to demonstrate special-text handling
+- If the images will live in the README, keep widths and crop style consistent
+
+#### Current Screenshots / 当前截图
+
+中文：
+下面两张截图展示了当前扩展在 Hugging Face 页面上的实际效果：
+- `compare` 模式：保留原页面结构，并在原文附近插入译文
+- `replace` 模式：直接把页面中的文本替换为译文
+
+English:
+The two screenshots below show the current extension behavior on a Hugging Face page:
+- `compare` mode keeps the original structure and injects translated content nearby
+- `replace` mode directly replaces page text with translated output
+
+![Compare Mode Screenshot / 对比模式截图](<doc/截图 2026-04-12 00-01-47.png>)
+
+![Replace Mode Screenshot / 覆盖模式截图](<doc/截图 2026-04-12 00-05-28.png>)
+
 ### Extension Capabilities / 扩展能力
 
 中文：
