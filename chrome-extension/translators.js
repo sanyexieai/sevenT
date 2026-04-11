@@ -7,7 +7,8 @@
     maxTargets: 400,
     renderMode: "compare",
     model: "",
-    apiKey: ""
+    apiKey: "",
+    customSkipPatterns: ""
   };
 
   function normalizeConfig(raw = {}) {
@@ -31,6 +32,7 @@
     config.renderMode = String(config.renderMode || DEFAULTS.renderMode).trim();
     config.model = String(config.model || "").trim();
     config.apiKey = String(config.apiKey || "").trim();
+    config.customSkipPatterns = String(config.customSkipPatterns || "").trim();
 
     return config;
   }

@@ -9,6 +9,7 @@ const elements = {
   sourceLang: document.getElementById("sourceLang"),
   targetLang: document.getElementById("targetLang"),
   maxTargets: document.getElementById("maxTargets"),
+  customSkipPatterns: document.getElementById("customSkipPatterns"),
   translateBtn: document.getElementById("translateBtn"),
   restoreBtn: document.getElementById("restoreBtn"),
   status: document.getElementById("status")
@@ -28,6 +29,7 @@ async function init() {
   elements.sourceLang.value = saved.sourceLang;
   elements.targetLang.value = saved.targetLang;
   elements.maxTargets.value = String(saved.maxTargets);
+  elements.customSkipPatterns.value = saved.customSkipPatterns;
 
   elements.translateBtn.addEventListener("click", () => runAction("translate"));
   elements.restoreBtn.addEventListener("click", () => runAction("restore"));
@@ -77,7 +79,8 @@ function readForm() {
     apiKey: elements.apiKey.value.trim(),
     sourceLang: elements.sourceLang.value.trim() || DEFAULTS.sourceLang,
     targetLang: elements.targetLang.value.trim() || DEFAULTS.targetLang,
-    maxTargets: Math.max(1, Number(elements.maxTargets.value) || DEFAULTS.maxTargets)
+    maxTargets: Math.max(1, Number(elements.maxTargets.value) || DEFAULTS.maxTargets),
+    customSkipPatterns: elements.customSkipPatterns.value
   });
 }
 

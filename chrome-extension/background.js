@@ -4,6 +4,8 @@ const DEFAULTS = globalThis.NASTranslators.DEFAULTS;
 
 const MENU_ID = "nas-translate-page-zh";
 const translatedTabs = new Set();
+const stickyTranslatedTabs = new Map();
+const reapplyingTabs = new Set();
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -36,6 +38,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       }
 
       translatedTabs.delete(tab.id);
+      stickyTranslatedTabs.delete(tab.id);
       await updateMenuTitle(tab.id);
       await clearBadge();
       return;
@@ -62,6 +65,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 
     translatedTabs.add(tab.id);
+    stickyTranslatedTabs.set(tab.id, options);
     await updateMenuTitle(tab.id);
     await clearBadge();
   } catch (error) {
@@ -84,12 +88,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   translatedTabs.delete(tabId);
+  stickyTranslatedTabs.delete(tabId);
+  reapplyingTabs.delete(tabId);
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "loading") {
     translatedTabs.delete(tabId);
     void updateMenuTitle(tabId);
+    return;
+  }
+
+  if (changeInfo.status === "complete" && stickyTranslatedTabs.has(tabId)) {
+    void reapplyTranslationForTab(tabId);
   }
 });
 
@@ -112,7 +123,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const options = globalThis.NASTranslators.normalizeConfig(saved);
       sendResponse({
         ok: true,
-        translated: translatedTabs.has(tabId),
+        translated: translatedTabs.has(tabId) || stickyTranslatedTabs.has(tabId),
         renderMode: options.renderMode,
         targetLang: options.targetLang
       });
@@ -130,7 +141,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const options = globalThis.NASTranslators.normalizeConfig(saved);
       sendResponse({
         ok: true,
-        translated: translatedTabs.has(tabId),
+        translated: translatedTabs.has(tabId) || stickyTranslatedTabs.has(tabId),
         renderMode: options.renderMode,
         targetLang: options.targetLang
       });
@@ -202,6 +213,7 @@ async function handleToggleTranslation(tabId) {
     }
 
     translatedTabs.delete(tabId);
+    stickyTranslatedTabs.delete(tabId);
     await updateMenuTitle(tabId);
     await clearBadge();
     return { translated: false, message: restoreResponse.message || "已显示原文。" };
@@ -228,6 +240,7 @@ async function handleToggleTranslation(tabId) {
   }
 
   translatedTabs.add(tabId);
+  stickyTranslatedTabs.set(tabId, options);
   await updateMenuTitle(tabId);
   await clearBadge();
   return { translated: true, message: response.message || "整页翻译完成。" };
@@ -250,6 +263,7 @@ async function handleSetTranslation(tabId, action, optionsOverride) {
     }
 
     translatedTabs.delete(tabId);
+    stickyTranslatedTabs.delete(tabId);
     await updateMenuTitle(tabId);
     await clearBadge();
     return { translated: false, message: "已显示原文。" };
@@ -276,9 +290,56 @@ async function handleSetTranslation(tabId, action, optionsOverride) {
   }
 
   translatedTabs.add(tabId);
+  stickyTranslatedTabs.set(tabId, options);
   await updateMenuTitle(tabId);
   await clearBadge();
   return { translated: true, message: "整页翻译完成。" };
+}
+
+async function reapplyTranslationForTab(tabId) {
+  if (reapplyingTabs.has(tabId)) {
+    return;
+  }
+
+  const stickyOptions = stickyTranslatedTabs.get(tabId);
+  if (!stickyOptions) {
+    return;
+  }
+
+  reapplyingTabs.add(tabId);
+  try {
+    await waitForTabComplete(tabId);
+    await ensureContentScript(tabId);
+
+    const response = await safeSendMessage(tabId, {
+      type: "NAS_TRANSLATE_PAGE",
+      payload: {
+        providerType: stickyOptions.providerType,
+        endpoint: stickyOptions.endpoint,
+        renderMode: stickyOptions.renderMode,
+        model: stickyOptions.model,
+        apiKey: stickyOptions.apiKey,
+        sourceLang: stickyOptions.sourceLang,
+        targetLang: stickyOptions.targetLang,
+        maxTargets: stickyOptions.maxTargets,
+        serviceUrl: stickyOptions.endpoint,
+        maxNodes: stickyOptions.maxTargets,
+        customSkipPatterns: stickyOptions.customSkipPatterns
+      }
+    });
+
+    if (!response?.ok) {
+      throw new Error(response?.error || "翻页后自动翻译失败。");
+    }
+
+    translatedTabs.add(tabId);
+    await updateMenuTitle(tabId);
+    await clearBadge();
+  } catch (_error) {
+    translatedTabs.delete(tabId);
+  } finally {
+    reapplyingTabs.delete(tabId);
+  }
 }
 
 async function ensureContentScript(tabId) {
@@ -350,7 +411,9 @@ async function clearBadge() {
 
 async function updateMenuTitle(tabId) {
   await chrome.contextMenus.update(MENU_ID, {
-    title: translatedTabs.has(tabId) ? "显示原文" : "翻译整页为中文"
+    title: translatedTabs.has(tabId) || stickyTranslatedTabs.has(tabId)
+      ? "显示原文"
+      : "翻译整页为中文"
   });
 }
 
