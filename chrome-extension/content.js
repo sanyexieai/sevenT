@@ -662,11 +662,28 @@
       return true;
     }
 
+    if (isNaturalLanguageCompound(trimmed)) {
+      return false;
+    }
+
     if (/^[A-Za-z0-9._:+/#-]+$/.test(trimmed)) {
-      return /[_/#:+.-]/.test(trimmed) || /[A-Z]{2,}/.test(trimmed);
+      return /[_/#+:.]/.test(trimmed)
+        || /[A-Z]{2,}/.test(trimmed)
+        || /-[0-9]/.test(trimmed)
+        || /[0-9]-/.test(trimmed);
     }
 
     return false;
+  }
+
+  function isNaturalLanguageCompound(text) {
+    const trimmed = text.trim();
+    if (!/^[A-Za-z]+(?:[-/][A-Za-z]+)+$/.test(trimmed)) {
+      return false;
+    }
+
+    const parts = trimmed.split(/[-/]/);
+    return parts.length >= 2 && parts.every((part) => part.length >= 2);
   }
 
   function candidateAttributesForElement(element) {
@@ -719,7 +736,7 @@
       /\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/g,
       /\b(?:[A-Z][a-z0-9]+){2,}\b/g,
       /\b[A-Z]{2,}(?:[0-9]+)?\b/g,
-      /\b[a-z0-9]+(?:[_/-][a-z0-9]+)+\b/gi,
+      /\b[a-z0-9]+(?:[_/][a-z0-9]+)+\b/gi,
       /\b(?:v?\d+\.\d+(?:\.\d+){0,3})\b/g,
       /\b[A-Za-z]:\\[^\s]+/g,
       /\b\/[A-Za-z0-9._/-]+\b/g,
@@ -745,6 +762,10 @@
 
     const merged = [];
     for (const match of matches) {
+      if (isNaturalLanguageCompound(match.value)) {
+        continue;
+      }
+
       const last = merged[merged.length - 1];
       if (!last || match.start >= last.end) {
         merged.push(match);
