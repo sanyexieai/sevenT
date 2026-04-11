@@ -1,0 +1,1 @@
+{"id":"30d20c85-b05c-42de-9496-64929802026f","timestamp_ms":1775894664202,"method":"POST","path":"/v1/translate","source_lang":"eng_Latn","target_lang":"zho_Hans","text_chars":11,"text_preview":"Hello world","user_agent":"curl/8.5.0","client_ip":"127.0.0.1","success":true,"elapsed_ms":896,"score":null,"error":null}

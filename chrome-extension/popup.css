@@ -1,0 +1,85 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font: 13px/1.4 "Segoe UI", "PingFang SC", sans-serif;
+  background: linear-gradient(160deg, #f6f1e8 0%, #eef4f1 100%);
+  color: #1e2a24;
+}
+
+.app {
+  width: 340px;
+  padding: 16px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.hint {
+  margin: 0 0 12px;
+  color: #54645d;
+}
+
+.field {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.field span {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.field input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #b9c8bf;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.field select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #b9c8bf;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+button {
+  flex: 1;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #d9e7df;
+  color: #183126;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button.primary {
+  background: #1f7a57;
+  color: #fff;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.status {
+  min-height: 20px;
+  margin: 12px 0 0;
+  color: #43564d;
+}

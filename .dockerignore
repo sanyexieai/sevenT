@@ -1,6 +1,9 @@
 /target
-/.git
+/.cargo
 /.env
 /data
 /models
 *.log
+!/.dist
+!/.dist/nas-nllb-service-cpu
+!/.dist/nas-nllb-service-gpu

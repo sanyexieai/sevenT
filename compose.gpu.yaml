@@ -1,0 +1,10 @@
+services:
+  nllb-service:
+    build:
+      target: runtime-gpu
+    environment:
+      CT2_DEVICE: auto
+      CT2_COMPUTE_TYPE: auto
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    gpus: all

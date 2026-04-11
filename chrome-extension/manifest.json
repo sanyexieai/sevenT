@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "NAS 页面翻译",
+  "description": "调用可配置翻译服务翻译网页文本，并按设定模式重新渲染页面。",
+  "version": "0.1.0",
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "http://127.0.0.1:8080/*",
+    "http://localhost:8080/*",
+    "http://3ye.co:18080/*"
+  ],
+  "action": {
+    "default_title": "NAS 页面翻译",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "translators.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

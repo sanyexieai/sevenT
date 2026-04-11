@@ -1,4 +1,4 @@
-use std::{env, net::SocketAddr, path::PathBuf};
+use std::{env, net::SocketAddr, path::Path, path::PathBuf};
 
 use anyhow::{anyhow, Context, Result};
 use ct2rs::{ComputeType, Config, Device, TranslationOptions};
@@ -7,6 +7,7 @@ use ct2rs::{ComputeType, Config, Device, TranslationOptions};
 pub struct AppConfig {
     pub bind_addr: SocketAddr,
     pub model_dir: PathBuf,
+    pub request_log_path: PathBuf,
     pub default_source_lang: String,
     pub default_target_lang: String,
     pub ct2_device: String,
@@ -24,9 +25,10 @@ impl AppConfig {
                 .parse()
                 .context("APP_BIND must be a valid socket address")?,
             model_dir: PathBuf::from(env_var("MODEL_DIR", "models/nllb-200-distilled-600M")?),
+            request_log_path: PathBuf::from(env_var("REQUEST_LOG_PATH", "logs/requests.jsonl")?),
             default_source_lang: env_var("DEFAULT_SOURCE_LANG", "eng_Latn")?,
             default_target_lang: env_var("DEFAULT_TARGET_LANG", "zho_Hans")?,
-            ct2_device: env_var("CT2_DEVICE", "cpu")?,
+            ct2_device: resolve_device(env_var("CT2_DEVICE", "auto")?),
             ct2_compute_type: env_var("CT2_COMPUTE_TYPE", "default")?,
             ct2_threads: env_usize("CT2_THREADS", 0)?,
             translation_beam_size: env_usize("TRANSLATION_BEAM_SIZE", 4)?,
@@ -71,6 +73,30 @@ fn parse_device(input: &str) -> Result<Device> {
         "cuda" | "gpu" => Ok(Device::CUDA),
         other => Err(anyhow!("unsupported CT2_DEVICE: {other}")),
     }
+}
+
+fn resolve_device(input: String) -> String {
+    match input.to_ascii_lowercase().as_str() {
+        "auto" | "gpu_preferred" | "prefer_gpu" => {
+            if has_nvidia_gpu() {
+                "cuda".to_string()
+            } else {
+                "cpu".to_string()
+            }
+        }
+        "cpu" | "cuda" | "gpu" => input,
+        _ => input,
+    }
+}
+
+fn has_nvidia_gpu() -> bool {
+    [
+        "/dev/nvidiactl",
+        "/dev/nvidia0",
+        "/proc/driver/nvidia/version",
+    ]
+    .iter()
+    .any(|path| Path::new(path).exists())
 }
 
 fn parse_compute_type(input: &str) -> Result<ComputeType> {

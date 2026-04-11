@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NAS 页面翻译</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="app">
+      <h1>NAS 页面翻译</h1>
+      <p class="hint">使用可配置的翻译 Provider，对当前页面进行翻译。</p>
+
+      <label class="field">
+        <span>翻译 Provider</span>
+        <select id="providerType">
+          <option value="http_nllb">HTTP：NLLB 风格接口</option>
+          <option value="http_openai_chat">HTTP：OpenAI Chat 兼容接口</option>
+          <option value="http_openai_responses">HTTP：OpenAI Responses 兼容接口</option>
+          <option value="mcp">MCP（预留）</option>
+          <option value="native_app">本地软件（预留）</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>接口地址</span>
+        <input id="endpoint" type="text" value="http://3ye.co:18080/">
+      </label>
+
+      <label class="field">
+        <span>渲染模式</span>
+        <select id="renderMode">
+          <option value="compare">翻译对比：保留原文并在下方显示译文</option>
+          <option value="replace">翻译覆盖：直接用译文替换原文</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>模型名称</span>
+        <input id="model" type="text" value="" placeholder="OpenAI 兼容接口可选">
+      </label>
+
+      <label class="field">
+        <span>API Key</span>
+        <input id="apiKey" type="password" value="" placeholder="可选">
+      </label>
+
+      <label class="field">
+        <span>源语言</span>
+        <input id="sourceLang" type="text" value="eng_Latn" placeholder="eng_Latn">
+      </label>
+
+      <label class="field">
+        <span>目标语言</span>
+        <input id="targetLang" type="text" value="zho_Hans" placeholder="zho_Hans">
+      </label>
+
+      <label class="field">
+        <span>单次最大处理数</span>
+        <input id="maxTargets" type="number" min="1" max="3000" value="400">
+      </label>
+
+      <div class="actions">
+        <button id="translateBtn" class="primary">翻译整页</button>
+        <button id="restoreBtn" type="button">显示原文</button>
+      </div>
+
+      <p id="status" class="status">准备就绪。</p>
+    </main>
+    <script src="translators.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

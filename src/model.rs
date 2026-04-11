@@ -41,12 +41,16 @@ pub struct ModelStatus {
 
 impl TranslationService {
     pub fn new(config: AppConfig) -> Result<Self> {
-        if !Path::new(&config.model_dir).exists() {
+        let model_dir = Path::new(&config.model_dir);
+
+        if !model_dir.exists() {
             return Err(anyhow!(
                 "model directory does not exist: {}",
                 config.model_dir.display()
             ));
         }
+
+        validate_model_dir(model_dir)?;
 
         let translator = Translator::new(&config.model_dir, &config.ct2_config()?)
             .with_context(|| format!("failed to load model from {}", config.model_dir.display()))?;
@@ -107,4 +111,29 @@ impl TranslationService {
             active_batches: self.translator.num_active_batches()?,
         })
     }
+}
+
+fn validate_model_dir(model_dir: &Path) -> Result<()> {
+    let model_bin = model_dir.join("model.bin");
+    if !model_bin.is_file() {
+        return Err(anyhow!(
+            "model directory is missing required file: {}",
+            model_bin.display()
+        ));
+    }
+
+    let tokenizer_json = model_dir.join("tokenizer.json");
+    let source_spm = model_dir.join("source.spm");
+    let target_spm = model_dir.join("target.spm");
+
+    if tokenizer_json.is_file() || (source_spm.is_file() && target_spm.is_file()) {
+        return Ok(());
+    }
+
+    Err(anyhow!(
+        "model directory is missing tokenizer files; expected either {} or both {} and {}",
+        tokenizer_json.display(),
+        source_spm.display(),
+        target_spm.display()
+    ))
 }

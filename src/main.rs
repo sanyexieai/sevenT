@@ -1,6 +1,7 @@
 mod config;
 mod http;
 mod model;
+mod request_log;
 
 use std::sync::Arc;
 
@@ -10,7 +11,9 @@ use tokio::{net::TcpListener, signal};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
-use crate::{config::AppConfig, http::build_router, model::TranslationService};
+use crate::{
+    config::AppConfig, http::build_router, model::TranslationService, request_log::RequestLogger,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -18,12 +21,15 @@ async fn main() -> anyhow::Result<()> {
     init_tracing();
 
     let config = AppConfig::from_env().context("failed to load application config")?;
+    let request_logger = Arc::new(
+        RequestLogger::new(&config.request_log_path).context("failed to initialize request logger")?,
+    );
     let service = Arc::new(
         TranslationService::new(config.clone())
             .context("failed to initialize translation service")?,
     );
 
-    let app = build_app(config.clone(), service);
+    let app = build_app(config.clone(), service, request_logger);
     let listener = TcpListener::bind(config.bind_addr)
         .await
         .with_context(|| format!("failed to bind {}", config.bind_addr))?;
@@ -31,12 +37,16 @@ async fn main() -> anyhow::Result<()> {
     info!(
         bind = %config.bind_addr,
         model_dir = %config.model_dir.display(),
+        request_log_path = %config.request_log_path.display(),
         device = %config.ct2_device,
         compute_type = %config.ct2_compute_type,
         "translation service started"
     );
 
-    axum::serve(listener, app)
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
         .with_graceful_shutdown(shutdown_signal())
         .await
         .context("axum server failed")?;
@@ -44,8 +54,12 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn build_app(config: AppConfig, service: Arc<TranslationService>) -> Router {
-    build_router(config, service).layer(TraceLayer::new_for_http())
+fn build_app(
+    config: AppConfig,
+    service: Arc<TranslationService>,
+    request_logger: Arc<RequestLogger>,
+) -> Router {
+    build_router(config, service, request_logger).layer(TraceLayer::new_for_http())
 }
 
 fn init_tracing() {
