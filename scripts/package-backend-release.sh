@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/.dist"
 CARGO_TOML="$ROOT_DIR/Cargo.toml"
+OS_UNAME="$(uname -s 2>/dev/null || echo unknown)"
 
 if [[ ! -f "$CARGO_TOML" ]]; then
   echo "Cargo.toml not found: $CARGO_TOML" >&2
@@ -43,16 +44,21 @@ case "$ARCHIVE_FORMAT" in
     tar -C "$TMP_DIR" -czf "$PACKAGE_PATH" "$PACKAGE_STEM"
     ;;
   zip)
-    if command -v zip >/dev/null 2>&1; then
+    if [[ "$OS_UNAME" == MINGW* || "$OS_UNAME" == MSYS* || "$OS_UNAME" == CYGWIN* ]]; then
+      ARCHIVE_PARENT_DIR="$DIST_DIR"
+      ARCHIVE_BASENAME="$(basename "$PACKAGE_PATH")"
+      powershell -NoProfile -Command \
+        "\$ErrorActionPreference = 'Stop'; \$stage = (Resolve-Path '$STAGE_DIR').Path; \$destDir = (Resolve-Path '$ARCHIVE_PARENT_DIR').Path; Compress-Archive -Path \$stage -DestinationPath (Join-Path \$destDir '$ARCHIVE_BASENAME') -Force"
+    elif command -v zip >/dev/null 2>&1; then
       (
         cd "$TMP_DIR"
         zip -qr "$PACKAGE_PATH" "$PACKAGE_STEM"
       )
-    elif command -v powershell >/dev/null 2>&1; then
-      powershell -NoProfile -Command \
-        "Compress-Archive -Path '$STAGE_DIR' -DestinationPath '$PACKAGE_PATH' -Force"
     elif command -v pwsh >/dev/null 2>&1; then
       pwsh -NoProfile -Command \
+        "Compress-Archive -Path '$STAGE_DIR' -DestinationPath '$PACKAGE_PATH' -Force"
+    elif command -v powershell >/dev/null 2>&1; then
+      powershell -NoProfile -Command \
         "Compress-Archive -Path '$STAGE_DIR' -DestinationPath '$PACKAGE_PATH' -Force"
     else
       echo "zip packaging requires either 'zip', 'powershell', or 'pwsh'" >&2

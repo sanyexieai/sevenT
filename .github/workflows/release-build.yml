@@ -73,7 +73,8 @@ jobs:
           RUSTFLAGS: ${{ matrix.rustflags }}
         run: cargo build ${{ matrix.cargo_args }}
 
-      - name: Package backend artifact
+      - name: Package backend artifact on Linux/macOS
+        if: ${{ matrix.target_os != 'windows' }}
         shell: bash
         env:
           TARGET_OS: ${{ matrix.target_os }}
@@ -91,13 +92,53 @@ jobs:
           scripts/package-backend-release.sh
           ls -lah .dist
 
-      - name: Stage backend artifacts
+      - name: Package backend artifact on Windows
+        if: ${{ matrix.target_os == 'windows' }}
+        shell: pwsh
+        env:
+          TARGET_OS: ${{ matrix.target_os }}
+          TARGET_ARCH: ${{ matrix.target_arch }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Select-String -Path Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          $binaryPath = "target\release\nas-nllb-service.exe"
+          if (-not (Test-Path $binaryPath)) {
+            $binaryPath = "target\${{ matrix.target_triple }}\release\nas-nllb-service.exe"
+          }
+          if (-not (Test-Path $binaryPath)) {
+            throw "binary not found: $binaryPath"
+          }
+          New-Item -ItemType Directory -Force -Path .dist | Out-Null
+          $packageStem = "nas-nllb-service-v$version-$env:TARGET_OS-$env:TARGET_ARCH-cpu"
+          $stageDir = Join-Path $env:RUNNER_TEMP $packageStem
+          Remove-Item -Recurse -Force $stageDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
+          Copy-Item $binaryPath (Join-Path $stageDir 'nas-nllb-service.exe')
+          $packagePath = Join-Path (Resolve-Path .dist).Path "$packageStem.zip"
+          if (Test-Path $packagePath) {
+            Remove-Item -Force $packagePath
+          }
+          Compress-Archive -Path $stageDir -DestinationPath $packagePath -Force
+          Get-ChildItem .dist
+
+      - name: Stage backend artifacts on Linux/macOS
+        if: ${{ matrix.target_os != 'windows' }}
         shell: bash
         run: |
           rm -rf artifact-backend
           mkdir -p artifact-backend
           find .dist -maxdepth 1 \( -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} artifact-backend/ \;
           ls -lah artifact-backend
+
+      - name: Stage backend artifacts on Windows
+        if: ${{ matrix.target_os == 'windows' }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Remove-Item -Recurse -Force artifact-backend -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path artifact-backend | Out-Null
+          Get-ChildItem .dist -File | Where-Object { $_.Name -like '*.zip' -or $_.Name -like '*.tar.gz' } | Copy-Item -Destination artifact-backend
+          Get-ChildItem artifact-backend
 
       - name: Upload backend artifact
         uses: actions/upload-artifact@v4
