@@ -138,15 +138,17 @@ jobs:
   build-extension:
     name: chrome-extension
     runs-on: ubuntu-latest
+    env:
+      CHROME_EXTENSION_PEM: ${{ secrets.CHROME_EXTENSION_PEM }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Restore CRX signing key
-        if: ${{ secrets.CHROME_EXTENSION_PEM != '' }}
+        if: ${{ env.CHROME_EXTENSION_PEM != '' }}
         shell: bash
         run: |
           mkdir -p .dist
-          printf '%s' "${{ secrets.CHROME_EXTENSION_PEM }}" > .dist/nas-page-translator-extension.pem
+          printf '%s' "$CHROME_EXTENSION_PEM" > .dist/nas-page-translator-extension.pem
           chmod 600 .dist/nas-page-translator-extension.pem
 
       - name: Package Chrome extension
