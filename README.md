@@ -294,7 +294,6 @@ docker compose -f compose.yaml -f compose.gpu.yaml up -d --build
 - 后端 CPU 发布包
   - `linux-x86_64`
   - `windows-x86_64`
-  - `macos-x86_64`
   - `macos-aarch64`
 - 后端 GPU 发布包
   - `linux-x86_64`
@@ -310,7 +309,7 @@ It:
 - builds and publishes a GitHub Release for `v*` tags
 - supports manual runs through `workflow_dispatch`
 
-Published artifacts include CPU backend archives for Linux, Windows, and macOS, a Linux x86_64 GPU backend archive, plus packaged Chrome extension `zip` and `crx` files.
+Published artifacts include CPU backend archives for Linux, Windows, and Apple Silicon macOS, plus packaged Chrome extension `zip` and `crx` files.
 
 ## HTTP API / HTTP 接口
 
