@@ -43,10 +43,22 @@ case "$ARCHIVE_FORMAT" in
     tar -C "$TMP_DIR" -czf "$PACKAGE_PATH" "$PACKAGE_STEM"
     ;;
   zip)
-    (
-      cd "$TMP_DIR"
-      zip -qr "$PACKAGE_PATH" "$PACKAGE_STEM"
-    )
+    if command -v zip >/dev/null 2>&1; then
+      (
+        cd "$TMP_DIR"
+        zip -qr "$PACKAGE_PATH" "$PACKAGE_STEM"
+      )
+    elif command -v powershell >/dev/null 2>&1; then
+      powershell -NoProfile -Command \
+        "Compress-Archive -Path '$STAGE_DIR' -DestinationPath '$PACKAGE_PATH' -Force"
+    elif command -v pwsh >/dev/null 2>&1; then
+      pwsh -NoProfile -Command \
+        "Compress-Archive -Path '$STAGE_DIR' -DestinationPath '$PACKAGE_PATH' -Force"
+    else
+      echo "zip packaging requires either 'zip', 'powershell', or 'pwsh'" >&2
+      rm -rf "$TMP_DIR"
+      exit 1
+    fi
     ;;
   *)
     echo "unsupported archive format: $ARCHIVE_FORMAT" >&2
