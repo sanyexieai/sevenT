@@ -31,6 +31,7 @@ jobs:
             cargo_args: --release --no-default-features
             binary_ext: ""
             rustflags: ""
+            archive_format: tar.gz
           - label: windows-x86_64-cpu
             runner: windows-latest
             target_os: windows
@@ -39,6 +40,7 @@ jobs:
             cargo_args: --release --no-default-features
             binary_ext: .exe
             rustflags: -C target-feature=+crt-static
+            archive_format: zip
           - label: macos-aarch64-cpu
             runner: macos-latest
             target_os: macos
@@ -47,6 +49,7 @@ jobs:
             cargo_args: --release --no-default-features
             binary_ext: ""
             rustflags: ""
+            archive_format: tar.gz
 
     steps:
       - uses: actions/checkout@v4
@@ -78,6 +81,7 @@ jobs:
           BUILD_FLAVOR: cpu
           BINARY_EXT: ${{ matrix.binary_ext }}
           BINARY_PATH: target/${{ matrix.target_triple }}/release/nas-nllb-service${{ matrix.binary_ext }}
+          ARCHIVE_FORMAT: ${{ matrix.archive_format }}
         run: |
           if [[ ! -f "$BINARY_PATH" ]]; then
             BINARY_PATH="target/release/nas-nllb-service${BINARY_EXT}"
@@ -92,7 +96,7 @@ jobs:
         run: |
           rm -rf artifact-backend
           mkdir -p artifact-backend
-          cp .dist/*.tar.gz artifact-backend/
+          find .dist -maxdepth 1 \( -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} artifact-backend/ \;
           ls -lah artifact-backend
 
       - name: Upload backend artifact

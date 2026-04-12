@@ -130,7 +130,55 @@ English:
 中文：
 项目默认使用 `facebook/nllb-200-distilled-600M` 转换得到的 CTranslate2 模型。
 
-模型转换命令如下：
+最简单的理解方式：
+
+1. 从 Hugging Face 获取 `facebook/nllb-200-distilled-600M`
+2. 把它转换成 CTranslate2 格式
+3. 最终放到仓库里的 `models/nllb-200-distilled-600M/`
+
+你最终需要准备好的不是 Hugging Face 原始模型仓库本身，而是下面这个本地目录：
+
+```text
+<仓库根目录>/models/nllb-200-distilled-600M/
+```
+
+也就是说，如果你的项目放在：
+
+```text
+/path/to/sevenT
+```
+
+那么模型必须放到：
+
+```text
+/path/to/sevenT/models/nllb-200-distilled-600M/
+```
+
+有两种准备方式：
+
+### 方式 A：自己从 Hugging Face 下载并转换
+
+上游模型来源：
+
+```text
+https://huggingface.co/facebook/nllb-200-distilled-600M
+```
+
+国内下载入口：
+
+```text
+飞牛分享【nllb-200-distilled-600M】
+http://3ye.co:8000/s/2c6573d201804674a7
+密码：2pef
+```
+
+如果你已经从国内网盘拿到的是转换后的模型目录，可以直接跳到下面的“方式 B”，把整个目录复制到：
+
+```text
+models/nllb-200-distilled-600M/
+```
+
+先安装转换工具，然后在仓库根目录执行：
 
 ```bash
 pip install ctranslate2 huggingface_hub torch transformers
@@ -139,7 +187,23 @@ ct2-transformers-converter --model facebook/nllb-200-distilled-600M \
   --copy_files tokenizer.json
 ```
 
-转换后，模型目录至少需要包含：
+这条命令会自动下载上游模型，并把转换后的结果写到仓库内的：
+
+```text
+models/nllb-200-distilled-600M/
+```
+
+### 方式 B：直接拷贝已经转换好的模型目录
+
+如果你已经在别的机器上转换过模型，也可以直接把整个目录复制过来。
+
+目标位置仍然是：
+
+```text
+models/nllb-200-distilled-600M/
+```
+
+转换后，目录至少需要包含：
 
 ```text
 models/nllb-200-distilled-600M/
@@ -159,6 +223,50 @@ models/nllb-200-distilled-600M/
 English:
 By default, the project expects a CTranslate2-converted version of `facebook/nllb-200-distilled-600M`.
 
+The shortest version is:
+
+1. get `facebook/nllb-200-distilled-600M` from Hugging Face
+2. convert it to CTranslate2 format
+3. place the result under `models/nllb-200-distilled-600M/`
+
+The service does not consume the raw Hugging Face Transformers checkpoint directly. What you need in the repository is this local directory:
+
+```text
+<repo-root>/models/nllb-200-distilled-600M/
+```
+
+If your repository is located at:
+
+```text
+/path/to/sevenT
+```
+
+the model must end up at:
+
+```text
+/path/to/sevenT/models/nllb-200-distilled-600M/
+```
+
+There are two supported ways to prepare it.
+
+### Option A: download from Hugging Face and convert locally
+
+Upstream model source:
+
+```text
+https://huggingface.co/facebook/nllb-200-distilled-600M
+```
+
+China mainland mirror/share link:
+
+```text
+Feiniu share: nllb-200-distilled-600M
+http://3ye.co:8000/s/2c6573d201804674a7
+Password: 2pef
+```
+
+If the shared package already contains a converted CTranslate2 model directory, you can skip the conversion step and go directly to Option B.
+
 Reference conversion command:
 
 ```bash
@@ -166,6 +274,20 @@ pip install ctranslate2 huggingface_hub torch transformers
 ct2-transformers-converter --model facebook/nllb-200-distilled-600M \
   --output_dir models/nllb-200-distilled-600M \
   --copy_files tokenizer.json
+```
+
+This downloads the upstream model and writes the converted files into:
+
+```text
+models/nllb-200-distilled-600M/
+```
+
+### Option B: copy a model directory that was already converted elsewhere
+
+If you already converted the model on another machine, you can copy the whole directory into:
+
+```text
+models/nllb-200-distilled-600M/
 ```
 
 The converted model directory must contain at least:
@@ -292,9 +414,9 @@ docker compose -f compose.yaml -f compose.gpu.yaml up -d --build
 
 产物包括：
 - 后端 CPU 发布包
-  - `linux-x86_64`
-  - `windows-x86_64`
-  - `macos-aarch64`
+  - `linux-x86_64`：`.tar.gz`
+  - `windows-x86_64`：`.zip`
+  - `macos-aarch64`：`.tar.gz`
 - 后端 GPU 发布包
   - `linux-x86_64`
 - Chrome 扩展发布包
@@ -309,7 +431,7 @@ It:
 - builds and publishes a GitHub Release for `v*` tags
 - supports manual runs through `workflow_dispatch`
 
-Published artifacts include CPU backend archives for Linux, Windows, and Apple Silicon macOS, plus packaged Chrome extension `zip` and `crx` files.
+Published artifacts include CPU backend archives for Linux (`.tar.gz`), Windows (`.zip`), and Apple Silicon macOS (`.tar.gz`), plus packaged Chrome extension `zip` and `crx` files.
 
 ## HTTP API / HTTP 接口
 
