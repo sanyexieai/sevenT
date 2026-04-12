@@ -51,11 +51,13 @@
     liveOptions: null,
     livePendingRoots: new Set(),
     liveFlushTimer: null,
+    navigationHooksInstalled: false,
     selectionCard: null,
     sidebar: null
   };
 
   initSidebar();
+  installNavigationHooks();
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === "NAS_PING") {
@@ -806,9 +808,7 @@
             queueLiveRoot(node);
           }
         } else if (mutation.type === "characterData") {
-          if (state.liveOptions?.renderMode === "replace") {
-            queueLiveRoot(mutation.target?.parentElement);
-          }
+          queueLiveRoot(mutation.target?.parentElement);
         }
       }
 
@@ -879,6 +879,43 @@
       state.liveFlushTimer = null;
       flushLiveTranslations().catch(() => {});
     }, 350);
+  }
+
+  function installNavigationHooks() {
+    if (state.navigationHooksInstalled) {
+      return;
+    }
+
+    state.navigationHooksInstalled = true;
+
+    const scheduleNavigationRefresh = () => {
+      if (!state.liveTranslateEnabled || state.observerMuted) {
+        return;
+      }
+
+      queueLiveRoot(document.body);
+      scheduleLiveFlush();
+    };
+
+    window.addEventListener("popstate", scheduleNavigationRefresh, true);
+    window.addEventListener("hashchange", scheduleNavigationRefresh, true);
+    window.addEventListener("pageshow", scheduleNavigationRefresh, true);
+
+    const wrapHistoryMethod = (methodName) => {
+      const original = history[methodName];
+      if (typeof original !== "function") {
+        return;
+      }
+
+      history[methodName] = function (...args) {
+        const result = original.apply(this, args);
+        window.setTimeout(scheduleNavigationRefresh, 0);
+        return result;
+      };
+    };
+
+    wrapHistoryMethod("pushState");
+    wrapHistoryMethod("replaceState");
   }
 
   async function flushLiveTranslations() {

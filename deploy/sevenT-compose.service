@@ -1,0 +1,18 @@
+[Unit]
+Description=sevenT Docker Compose Stack
+Requires=docker.service
+After=docker.service
+RequiresMountsFor=/mnt/code_disk
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=REQUIRED_MOUNTPOINT=/mnt/code_disk
+Environment=ENABLE_GPU=0
+WorkingDirectory=/mnt/code_disk/code/rust/sevenT
+ExecStart=/mnt/code_disk/code/rust/sevenT/scripts/compose-up-safe.sh
+ExecStop=/usr/bin/docker compose -f /mnt/code_disk/code/rust/sevenT/compose.yaml down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

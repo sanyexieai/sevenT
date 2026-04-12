@@ -6,3 +6,4 @@
 .cargo/
 .venv/
 target/
+.dist/

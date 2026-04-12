@@ -45,6 +45,12 @@ The project is optimized for practical deployment rather than for being a full b
 ## Quick Start / 快速开始
 
 中文：
+- 想直接安装扩展并完成首次配置，参考 [Chrome 插件安装与配置指南](doc/chrome-extension-install.md)
+- 想下载已经打好的发布构建，使用 GitHub Releases 中的后端归档包和扩展 zip
+
+English:
+- For the quickest end-user setup flow, see [Chrome Extension Install Guide](doc/chrome-extension-install.md)
+- Prebuilt backend archives and extension zip files are published through GitHub Releases
 标准启动流程如下：
 1. 准备好 `models/nllb-200-distilled-600M/`
 2. 启动本地服务：`cargo run`
@@ -274,6 +280,38 @@ docker compose -f compose.yaml -f compose.gpu.yaml up -d --build
 - The NAS has enough memory to load the model
 - GPU mode requires NVIDIA Container Toolkit configured on the host
 
+## Release Automation / 自动发布构建
+
+中文：
+仓库内置了 GitHub Actions 发布流程 [release-build.yml](.github/workflows/release-build.yml)，用于自动产出发布版本构建物。
+
+默认行为：
+- 推送到 `main` 时自动构建
+- 推送 `v*` 标签时自动构建并发布 GitHub Release
+- 支持手动触发 `workflow_dispatch`
+
+产物包括：
+- 后端 CPU 发布包
+  - `linux-x86_64`
+  - `windows-x86_64`
+  - `macos-x86_64`
+  - `macos-aarch64`
+- 后端 GPU 发布包
+  - `linux-x86_64`
+- Chrome 扩展发布包
+  - `nas-page-translator-chrome-extension-v*.zip`
+  - `nas-page-translator-chrome-extension-v*.crx`
+
+English:
+The repository ships with [release-build.yml](.github/workflows/release-build.yml) for automated release builds.
+
+It:
+- builds automatically on pushes to `main`
+- builds and publishes a GitHub Release for `v*` tags
+- supports manual runs through `workflow_dispatch`
+
+Published artifacts include CPU backend archives for Linux, Windows, and macOS, a Linux x86_64 GPU backend archive, plus packaged Chrome extension `zip` and `crx` files.
+
 ## HTTP API / HTTP 接口
 
 健康检查 / Health check:
@@ -315,6 +353,7 @@ curl -X POST http://127.0.0.1:8080/v1/translate \
 
 中文：
 扩展目录位于 `chrome-extension/`，可直接作为本地调试扩展加载。
+如果你是普通安装用户，优先参考 [Chrome 插件安装与配置指南](doc/chrome-extension-install.md)。
 
 加载方式：
 
@@ -337,6 +376,7 @@ chrome://extensions
 
 English:
 The extension lives in `chrome-extension/` and can be loaded unpacked for local testing.
+End users should prefer the guided install doc: [Chrome Extension Install Guide](doc/chrome-extension-install.md).
 
 Steps:
 - Start the local translation service first

@@ -6,6 +6,7 @@ const MENU_ID = "nas-translate-page-zh";
 const translatedTabs = new Set();
 const stickyTranslatedTabs = new Map();
 const reapplyingTabs = new Set();
+const STICKY_SESSION_KEY = "nasStickyTranslatedTabs";
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -90,6 +91,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   translatedTabs.delete(tabId);
   stickyTranslatedTabs.delete(tabId);
   reapplyingTabs.delete(tabId);
+  void persistStickyTranslatedTabs();
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
@@ -99,8 +101,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
     return;
   }
 
-  if (changeInfo.status === "complete" && stickyTranslatedTabs.has(tabId)) {
-    void reapplyTranslationForTab(tabId);
+  if (changeInfo.status === "complete") {
+    void maybeReapplyTranslationForTab(tabId);
   }
 });
 
@@ -119,11 +121,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ ok: false, error: "未找到标签页状态。" });
       return false;
     }
-    chrome.storage.sync.get(DEFAULTS).then((saved) => {
+    Promise.all([
+      chrome.storage.sync.get(DEFAULTS),
+      isStickyTranslated(tabId)
+    ]).then(([saved, sticky]) => {
       const options = globalThis.NASTranslators.normalizeConfig(saved);
       sendResponse({
         ok: true,
-        translated: translatedTabs.has(tabId) || stickyTranslatedTabs.has(tabId),
+        translated: translatedTabs.has(tabId) || sticky,
         renderMode: options.renderMode,
         targetLang: options.targetLang
       });
@@ -137,11 +142,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ ok: false, error: "未找到目标标签页。" });
       return false;
     }
-    chrome.storage.sync.get(DEFAULTS).then((saved) => {
+    Promise.all([
+      chrome.storage.sync.get(DEFAULTS),
+      isStickyTranslated(tabId)
+    ]).then(([saved, sticky]) => {
       const options = globalThis.NASTranslators.normalizeConfig(saved);
       sendResponse({
         ok: true,
-        translated: translatedTabs.has(tabId) || stickyTranslatedTabs.has(tabId),
+        translated: translatedTabs.has(tabId) || sticky,
         renderMode: options.renderMode,
         targetLang: options.targetLang
       });
@@ -214,6 +222,7 @@ async function handleToggleTranslation(tabId) {
 
     translatedTabs.delete(tabId);
     stickyTranslatedTabs.delete(tabId);
+    await persistStickyTranslatedTabs();
     await updateMenuTitle(tabId);
     await clearBadge();
     return { translated: false, message: restoreResponse.message || "已显示原文。" };
@@ -241,6 +250,7 @@ async function handleToggleTranslation(tabId) {
 
   translatedTabs.add(tabId);
   stickyTranslatedTabs.set(tabId, options);
+  await persistStickyTranslatedTabs();
   await updateMenuTitle(tabId);
   await clearBadge();
   return { translated: true, message: response.message || "整页翻译完成。" };
@@ -264,6 +274,7 @@ async function handleSetTranslation(tabId, action, optionsOverride) {
 
     translatedTabs.delete(tabId);
     stickyTranslatedTabs.delete(tabId);
+    await persistStickyTranslatedTabs();
     await updateMenuTitle(tabId);
     await clearBadge();
     return { translated: false, message: "已显示原文。" };
@@ -291,9 +302,16 @@ async function handleSetTranslation(tabId, action, optionsOverride) {
 
   translatedTabs.add(tabId);
   stickyTranslatedTabs.set(tabId, options);
+  await persistStickyTranslatedTabs();
   await updateMenuTitle(tabId);
   await clearBadge();
   return { translated: true, message: "整页翻译完成。" };
+}
+
+async function maybeReapplyTranslationForTab(tabId) {
+  if (await isStickyTranslated(tabId)) {
+    await reapplyTranslationForTab(tabId);
+  }
 }
 
 async function reapplyTranslationForTab(tabId) {
@@ -340,6 +358,38 @@ async function reapplyTranslationForTab(tabId) {
   } finally {
     reapplyingTabs.delete(tabId);
   }
+}
+
+async function hydrateStickyStateForTab(tabId) {
+  const saved = await chrome.storage.session.get(STICKY_SESSION_KEY);
+  const entries = saved?.[STICKY_SESSION_KEY];
+  if (!entries || typeof entries !== "object") {
+    return;
+  }
+
+  const stickyOptions = entries[String(tabId)];
+  if (!stickyOptions) {
+    return;
+  }
+
+  stickyTranslatedTabs.set(tabId, globalThis.NASTranslators.normalizeConfig(stickyOptions));
+}
+
+async function isStickyTranslated(tabId) {
+  if (stickyTranslatedTabs.has(tabId)) {
+    return true;
+  }
+
+  await hydrateStickyStateForTab(tabId);
+  return stickyTranslatedTabs.has(tabId);
+}
+
+async function persistStickyTranslatedTabs() {
+  const payload = {};
+  for (const [tabId, options] of stickyTranslatedTabs.entries()) {
+    payload[String(tabId)] = options;
+  }
+  await chrome.storage.session.set({ [STICKY_SESSION_KEY]: payload });
 }
 
 async function ensureContentScript(tabId) {
@@ -410,8 +460,9 @@ async function clearBadge() {
 }
 
 async function updateMenuTitle(tabId) {
+  const sticky = await isStickyTranslated(tabId);
   await chrome.contextMenus.update(MENU_ID, {
-    title: translatedTabs.has(tabId) || stickyTranslatedTabs.has(tabId)
+    title: translatedTabs.has(tabId) || sticky
       ? "显示原文"
       : "翻译整页为中文"
   });
