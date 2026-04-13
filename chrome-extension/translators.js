@@ -25,7 +25,7 @@
     }
 
     config.providerType = String(config.providerType || DEFAULTS.providerType);
-    config.endpoint = String(config.endpoint || DEFAULTS.endpoint).trim();
+    config.endpoint = String(config.endpoint || "").trim();
     config.sourceLang = String(config.sourceLang || DEFAULTS.sourceLang).trim();
     config.targetLang = String(config.targetLang || DEFAULTS.targetLang).trim();
     config.maxTargets = Math.max(1, Number(config.maxTargets) || DEFAULTS.maxTargets);
@@ -43,6 +43,10 @@
 
     if (!provider) {
       throw new Error(`Unsupported translator provider: ${config.providerType}`);
+    }
+
+    if (!config.endpoint) {
+      throw new Error("Translation endpoint is empty.");
     }
 
     return provider.translate(payload, config);
@@ -65,7 +69,7 @@
 
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(data.error || `Translation request failed with ${response.status}`);
+          throw new Error(data.error || `Translation request failed with ${response.status} via ${resolveHttpNllbEndpoint(config.endpoint)}`);
         }
         if (typeof data.text !== "string") {
           throw new Error("Translation response did not contain text.");
@@ -102,7 +106,7 @@
 
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(data.error?.message || data.error || `Translation request failed with ${response.status}`);
+          throw new Error(data.error?.message || data.error || `Translation request failed with ${response.status} via ${config.endpoint}`);
         }
 
         const text = data.choices?.[0]?.message?.content;
@@ -132,7 +136,7 @@
 
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(data.error?.message || data.error || `Translation request failed with ${response.status}`);
+          throw new Error(data.error?.message || data.error || `Translation request failed with ${response.status} via ${config.endpoint}`);
         }
 
         const text =

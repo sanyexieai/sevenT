@@ -56,6 +56,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         sourceLang: options.sourceLang,
         targetLang: options.targetLang,
         maxTargets: options.maxTargets,
+        customSkipPatterns: options.customSkipPatterns,
         serviceUrl: options.endpoint,
         maxNodes: options.maxTargets
       }
@@ -129,6 +130,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({
         ok: true,
         translated: translatedTabs.has(tabId) || sticky,
+        endpoint: options.endpoint,
         renderMode: options.renderMode,
         targetLang: options.targetLang
       });
@@ -150,6 +152,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({
         ok: true,
         translated: translatedTabs.has(tabId) || sticky,
+        endpoint: options.endpoint,
         renderMode: options.renderMode,
         targetLang: options.targetLang
       });
@@ -239,6 +242,7 @@ async function handleToggleTranslation(tabId) {
       sourceLang: options.sourceLang,
       targetLang: options.targetLang,
       maxTargets: options.maxTargets,
+      customSkipPatterns: options.customSkipPatterns,
       serviceUrl: options.endpoint,
       maxNodes: options.maxTargets
     }
@@ -280,6 +284,21 @@ async function handleSetTranslation(tabId, action, optionsOverride) {
     return { translated: false, message: "已显示原文。" };
   }
 
+  if (translatedTabs.has(tabId) || await isStickyTranslated(tabId)) {
+    const restoreResponse = await safeSendMessage(tabId, {
+      type: "NAS_RESTORE_PAGE",
+      payload: {}
+    });
+
+    if (!restoreResponse?.ok) {
+      throw new Error(restoreResponse?.error || "显示原文失败。");
+    }
+
+    translatedTabs.delete(tabId);
+    stickyTranslatedTabs.delete(tabId);
+    await persistStickyTranslatedTabs();
+  }
+
   const response = await safeSendMessage(tabId, {
     type: "NAS_TRANSLATE_PAGE",
     payload: {
@@ -291,6 +310,7 @@ async function handleSetTranslation(tabId, action, optionsOverride) {
       sourceLang: options.sourceLang,
       targetLang: options.targetLang,
       maxTargets: options.maxTargets,
+      customSkipPatterns: options.customSkipPatterns,
       serviceUrl: options.endpoint,
       maxNodes: options.maxTargets
     }

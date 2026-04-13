@@ -14,9 +14,9 @@
       <label class="field">
         <span>翻译 Provider</span>
         <select id="providerType">
-          <option value="http_nllb">HTTP：NLLB 风格接口</option>
-          <option value="http_openai_chat">HTTP：OpenAI Chat 兼容接口</option>
-          <option value="http_openai_responses">HTTP：OpenAI Responses 兼容接口</option>
+          <option value="http_nllb">HTTP: NLLB 风格接口</option>
+          <option value="http_openai_chat">HTTP: OpenAI Chat 兼容接口</option>
+          <option value="http_openai_responses">HTTP: OpenAI Responses 兼容接口</option>
           <option value="mcp">MCP（预留）</option>
           <option value="native_app">本地软件（预留）</option>
         </select>
@@ -63,10 +63,11 @@
       <label class="field">
         <span>自定义白名单</span>
         <textarea id="customSkipPatterns" rows="6" placeholder="# 每行一条，支持精确匹配或 /正则/flags&#10;internlm&#10;/^github$/i&#10;/^\\/[A-Za-z0-9._/-]+$/"></textarea>
-        <small class="field-note">内置白名单会始终跳过：URL、邮箱、明确的多段路径、Windows 路径、HTML 标签/实体、域名、版本号、长哈希。这里填你自己的额外跳过规则。</small>
+        <small class="field-note">内置白名单会始终跳过 URL、邮箱、明显的多段路径、Windows 路径、HTML 标签或实体、域名、版本号、长哈希。这里填写你自己的额外跳过规则。</small>
       </label>
 
       <div class="actions">
+        <button id="saveBtn" type="button" class="secondary">保存配置</button>
         <button id="translateBtn" class="primary">翻译整页</button>
         <button id="restoreBtn" type="button">显示原文</button>
       </div>

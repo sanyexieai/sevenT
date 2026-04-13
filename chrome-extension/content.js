@@ -1113,9 +1113,16 @@
           type: "NAS_TRANSLATE_TEXT",
           payload: {
             text,
+            providerType: options.providerType,
+            endpoint: options.endpoint,
             serviceUrl: options.serviceUrl,
+            model: options.model,
+            apiKey: options.apiKey,
             sourceLang: options.sourceLang,
-            targetLang: options.targetLang
+            targetLang: options.targetLang,
+            maxTargets: options.maxTargets,
+            maxNodes: options.maxNodes,
+            customSkipPatterns: options.customSkipPatterns
           }
         });
 

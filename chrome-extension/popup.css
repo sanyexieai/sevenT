@@ -35,7 +35,9 @@ h1 {
   font-weight: 600;
 }
 
-.field input {
+.field input,
+.field textarea,
+.field select {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid #b9c8bf;
@@ -44,22 +46,9 @@ h1 {
 }
 
 .field textarea {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #b9c8bf;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.88);
   resize: vertical;
   min-height: 108px;
   font: 12px/1.45 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-}
-
-.field select {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #b9c8bf;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.88);
 }
 
 .field-note {
@@ -70,13 +59,14 @@ h1 {
 }
 
 .actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 12px;
 }
 
 button {
-  flex: 1;
+  width: 100%;
   padding: 10px 12px;
   border: 0;
   border-radius: 999px;
@@ -89,6 +79,12 @@ button {
 button.primary {
   background: #1f7a57;
   color: #fff;
+}
+
+button.secondary {
+  background: #fff7db;
+  color: #5b4510;
+  border: 1px solid #e5d38d;
 }
 
 button:disabled {
